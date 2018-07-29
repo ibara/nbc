@@ -8,7 +8,7 @@ cccheck() {
 cat << EOF > conftest.c
 int main(void){return 0;}
 EOF
-    $CC -o conftest conftest.c > /dev/null 2>&1
+    $CC $cflags $ldflags -o conftest conftest.c > /dev/null 2>&1
     if [ $? -eq 0 ] ; then
       ./conftest
       if [ $? -eq 0 ] ; then
@@ -30,7 +30,7 @@ cat << EOF > conftest.c
 int main(void){return 0;}
 EOF
 
-    $compiler -o conftest conftest.c > /dev/null 2>&1
+    $compiler $cflags $ldflags -o conftest conftest.c > /dev/null 2>&1
 
     if [ $? -eq 0 ] ; then
       ./conftest
@@ -55,7 +55,7 @@ libeditcheck() {
 #include <histedit.h>
 int main(void){el_init(NULL, NULL, NULL, NULL);return 0;}
 EOF
-  $cc -o conftest conftest.c -ledit $libeditlibs > /dev/null 2>&1
+  $cc $cflags $ldflags -o conftest conftest.c -ledit $libeditlibs > /dev/null 2>&1
   if [ $? -eq 0 ] ; then
     rm -f conftest conftest.c
     return 0
@@ -70,7 +70,7 @@ readlinecheck() {
 #include <readline/readline.h>
 int main(void){rl_initialize();return 0;}
 EOF
-  $cc -o conftest conftest.c -lreadline $libreadlinelibs > /dev/null 2>&1
+  $cc $cflags $ldflags -o conftest conftest.c -lreadline $libreadlinelibs > /dev/null 2>&1
   if [ $? -eq 0 ] ; then
     rm -f conftest conftest.c
     return 0
@@ -85,28 +85,13 @@ setvbufcheck() {
 #include <stdio.h>
 int main(void){setvbuf(NULL,NULL,0,0);return 0;}
 EOF
-  $cc -o conftest conftest.c > /dev/null 2>&1
+  $cc $cflags $ldflags -o conftest conftest.c > /dev/null 2>&1
   if [ $? -eq 0 ] ; then
     rm -f conftest conftest.c
     return 0
   else
     rm -f conftest conftest.c
     return 1
-  fi
-}
-
-wflagcheck() {
-  cat << EOF > conftest.c
-int main(void){return 0;}
-EOF
-  $cc -w -o conftest conftest.c > /dev/null 2> conftest.err
-  grep ':' conftest.err > /dev/null 2>&1
-  if [ $? -eq 0 ] ; then
-    rm -f conftest conftest.err conftest.c
-    return 1
-  else
-    rm -f conftest conftest.err conftest.c
-    return 0
   fi
 }
 
@@ -122,7 +107,7 @@ mandir="$prefix/man"
 libeditlibs="-ltermcap"
 libreadlinelibs="-ltermcap"
 
-instprog="nbc"
+prog="nbc"
 static=0
 
 # Options
@@ -137,9 +122,9 @@ do
 	;;
     --disable-bc|--enable-bc)
 	if [ "x$opt" = "x--enable-bc" ] ; then
-	  instprog="bc"
+	  prog="bc"
 	else
-	  instprog="nbc"
+	  prog="nbc"
 	fi
 	;;
     --disable-static|--enable-static)
@@ -160,7 +145,7 @@ do
 	printf "  --mandir=MANDIR         "
 	echo "Manual pages are installed to MANDIR [$mandir]"
 	printf "  --enable-bc             "
-	echo "Install executable as ed [default=$instprog]"
+	echo "Install executable as bc [default=$prog]"
 	printf "  --enable-static         "
 	echo "Statically link executables [default=no]"
 	exit 1
@@ -194,15 +179,6 @@ if [ $? -ne 0 ] ; then
   exit 1
 else
   echo "$cc"
-fi
-
-printf "checking for -w compiler flag... "
-wflagcheck
-if [ $? -ne 0 ] ; then
-  echo "no"
-else
-  cflags="$cflags -w"
-  echo "yes"
 fi
 
 printf "checking for OS... "
@@ -275,7 +251,7 @@ cat << EOF >> Makefile
 PREFIX ?=	$prefix
 MANDIR ?=	$mandir
 
-PROG =	$instprog
+PROG =	$prog
 OBJS =	bc.o execute.o global.o load.o main.o number.o scan.o \\
 	storage.o util.o warranty.o
 
